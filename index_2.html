@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+
+path {
+  fill: none;
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+
+ circle {
+        fill: rgb(80,80,250);
+        stroke: black;
+        stroke-width: 1.0;
+        opacity: 0.7;
+      }
+  text {
+    font-size : 10px;
+  }
+
+ h2 {
+        text-align: center;
+        color: black;
+        white-space: pre;
+      }
+
+
+  div {
+    white-space: pre;
+}
+
+
+
+div.Selections {
+        position: fixed;
+        top: 50px;
+        right: 50px;
+      }
+
+div.Selections div {
+        background-color: lightblue;
+        color : black;
+        padding: 3px;
+        margin: 7px;
+      }
+
+</style>
+
+
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<script type="text/javascript">
+
+   var margin = 75,
+       width = 1400 - margin,
+       height = 800 - margin;
+
+
+var methods = ['Departures', 'Arrivals', 'Mean_Departure_Delay_per_Flight', 'Mean_Arrival_Delay_per_Flight'];
+
+var si = {'Departures':'','Arrivals':'', 'Mean_Departure_Delay_per_Flight': 'in Minutes', 'Mean_Arrival_Delay_per_Flight': 'in Minutes' };
+
+var colour = {'Departures':'rgb(102,180,255)','Arrivals':'rgb(51,51,255)', 'Mean_Departure_Delay_per_Flight': 'rgb(153,153,255)', 'Mean_Arrival_Delay': '(204,204,255)' };
+
+var airport_projection = d3.geo.albersUsa()
+                            .scale(1300) 
+                            .translate([width / 2, height / 2]);
+
+//==========================draw(airport_data) ==================
+//===============================================================
+
+function draw(airport_data) {
+
+  //console.log(airport_data);
+  //debugger;
+
+d3.select("body")
+          .append("h2")
+          .text("US Airport Information 2008");
+
+var path = d3.geo.path()
+    .projection(null);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+//==========================Create US Map========================
+//===============================================================
+d3.json("build/us_map.json", function(error, us) {
+  if (error) return console.error(error);
+
+ console.log(us);
+ //debugger;
+
+  svg.append("path")
+      .datum(topojson.feature(us, us.objects.counties))
+      .attr("class", "state")
+      .attr("d", path);
+
+    });
+//===============================================================
+//===============================================================
+
+//Reading in Flight Data
+var Max_DepFlights = 0;
+var radius;
+var nested;
+
+//This function combines the Data of 2 csv file (airportdata and arrivals_year.csv)
+//===============================================================
+//===============================================================
+function add_geodata(leaves){
+  Geo_Coord = [];
+  //debugger;
+  found = false;
+  count = 0
+  while (found == false && count < airport_data.length) {
+    if (airport_data[count]['iata'] == leaves[0]['Airport']) {
+      Geo_Coord.push(airport_data[count]['lat'])
+      Geo_Coord.push(airport_data[count]['long'])
+      found = true;
+    }
+      count ++;  
+  }
+  //debugger;
+  return {'lat' : Geo_Coord[0],
+          'long' : Geo_Coord[1],
+          'Airport': airport_data[count-1]['airport'],
+          'Departures' : leaves[0]['DepFlights'],
+          'Arrivals' : leaves[0]['Arrivals'],
+          'Mean_Departure_Delay_per_Flight' : leaves[0]['DepDelay_Mean'],
+          'Mean_Arrival_Delay_per_Flight': leaves[0]['ArrivalsDelay_Mean']
+          }
+
+};
+//===============================================================
+//===============================================================
+
+
+ d3.csv("Arrivals_year.csv", function(data){
+  console.log(data);
+
+  nested = d3.nest()
+            .key(function(d){
+              return d['Airport'];
+            })
+            .rollup(add_geodata)
+            .entries(data);
+
+
+  var buttons = d3.select("body")
+                .append("div")
+                .attr("class", "Selections")
+                .selectAll("div")
+                .data(methods)
+                .enter()
+                .append("div")
+                .text(function(d) {
+                      return d.replace(/_/gi,' ') +' ' + si[d];
+                        });
+
+
+  buttons.on("click", function(d) {
+
+   d3.select(".Selections")
+     .selectAll('div')
+     .transition()
+     .duration(500)
+     .style("background","lightblue")
+     .style("color","black");
+
+                    
+     d3.select(this)
+       .transition()
+       .duration(500)
+       .style("background", "lightGreen")
+       .style("color", "white");
+        update(d);
+       });
+
+
+//=============================getGeoPos(d,Boolean)===================================
+//====================================================================================
+
+
+
+//==========================END getGeoPos(d,Boolean)===================================
+//====================================================================================
+
+function getGeoPos(d,Boolean){
+   //console.log("Hello")
+   //console.log(Boolean)
+   var Geo = airport_projection([+d.values.long, +d.values.lat]);
+   //console.log(Geo)
+  if (Geo == null) {
+    //console.log(d);
+                  return -100; }
+ else {
+         if (Boolean == true) {
+       return Geo[0];
+    }
+    else {
+      return Geo[1];
+    };
+                                         
+};
+};
+
+//=============================update(selection)======================================
+//====================================================================================
+  function update(Selection){
+
+
+   nested = nested.sort(function(a,b){
+              return b.values[Selection] - a.values[Selection];
+              });
+
+  
+
+  console.log(nested)
+  Max= d3.max(nested, function(d){
+                      return parseInt(d.values[Selection])
+                      })
+ 
+  
+ //Scale for appended circles
+  radius = d3.scale.sqrt()
+                   .domain([0, Max])
+                   .range([0, 30]);
+
+
+ //tooltip for circle selection
+  var tooltip = d3.select("body")
+  .append("div")
+  .style("position", "absolute")
+  .style("z-index", "10")
+  .style("visibility", "hidden")
+  .text("a simple tooltip");
+
+
+
+   d3.select("h2")
+     .text("US Airport Information 2008 " +'\n' + Selection.replace(/_/gi,' '));
+
+    svg.selectAll('circle')
+                  .data([])
+                  .exit()
+                  .remove();
+ 
+            
+    svg.append('g')
+       .attr('class','bubble')
+       .selectAll('circle')
+       .data(nested, function(d) {
+                   return d.values['Airport']
+                                 })
+       .enter()
+       .append('circle')
+       .attr('cx', function(d) {  return getGeoPos(d,true);
+                                          })
+       .attr('cy', function(d) {  return getGeoPos(d,false)})
+       .attr('r', function(d) {      
+                          if (d.values[Selection] == "NaN"){
+                            return 0;
+                          }
+                          else {
+                          r = parseFloat(d.values[Selection]);
+                          if (r > 0) {
+                          return radius(r)
+                          }
+                          else {
+                            return 0
+                          }}})
+       .style('fill', colour[Selection])
+       .on("mouseover", function(d){     
+                                        d3.select(this)
+                                          .transition()
+                                          .duration(1)
+                                          .style('fill', 'red')
+                                          .style('stroke', 'green')
+                                          .style('stroke-width', '1.5')
+                                          tooltip.text(d['key'] +"\n" + d.values['Airport'])
+                                                .style("visibility", "visible");})
+
+       .on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+15)+"px");})
+       .on("mouseout", function(d){  
+                                    d3.select(this)
+                                      .transition()
+                                      .duration(1)
+                                      .style('fill', colour[Selection])
+                                      .style('stroke','black')
+                                      .style('stroke-width','1.0')
+                                      tooltip.style("visibility", "hidden");})
+
+// Add a legend for different selections
+legend = svg.select(".legend")
+                  .data([])
+legend.exit().remove();
+
+
+Math.round(Max,1);
+var legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", "translate(" + (width - 100) + "," + (height - 20) + ")")
+    .selectAll("g")
+    .data([Max/100, Max/10, Max])
+    .enter().append("g");
+
+legend.append("circle")
+    .attr("cy", function(d) { return  -radius(d); })
+    .attr("r", radius)
+    .style('fill', 'none')
+    .style('stroke-width', '0.7');
+
+legend.append("text")
+    .attr("y", function(d) { return -2* radius(d) ; })
+    .attr("dx", "-0.4em")
+    .style('stroke-width', '0.7')
+    .text(d3.format(".1ns"));
+
+}
+                                              
+//=========================END update(selection)======================================
+//====================================================================================
+
+
+ });
+
+};
+
+
+
+
+</script>
+</head>
+<body>
+  <script type="text/javascript">
+
+console.log("Starting to load Airport.csv");
+d3.csv("airports.csv",draw);
+  </script>
+
+</body>
+</html>

@@ -1,2 +1,6 @@
 *.csv
 *.bz2
+*.pages
+.DS_Store
+build
+node_modules
