@@ -77,7 +77,7 @@ div.Explore div {
 }
 div.barchart {
   position: fixed;
-  bottom: 300px;
+  bottom: 200px;
   right: 80px;
   text-align: center;
   font-size: 15px;
@@ -98,8 +98,8 @@ div.fixed {
     position: fixed;
     bottom: 0;
     right: 0;
-    width: 300px;
-    border: 2px solid white;
+    width: 200px;
+    border: 2px solid none;
 }
 
 div.tt {
@@ -426,7 +426,7 @@ function getGeoPos(d,Boolean){
 
         d3.select('.barchart')
           .text(function(){
-            return Explore.replace(/_/gi,' ')
+            return Explore.replace(/_/gi,' ') + ' in Minutes'
             })
           .selectAll('div')
           .data(nested)
@@ -438,8 +438,13 @@ function getGeoPos(d,Boolean){
               if (delay < 1.0){
                 return 0 + 'px';
               } 
-              else{
+              else {
+                if(Explore == 'Mean_Departure_Delay_per_Flight'){
                 return bar_scale(delay) + 'px';
+              }
+              else{
+                return delay + 'px'
+              }
               } 
               
           })
@@ -546,9 +551,9 @@ legend.append("text")
 console.log("Starting to load Airport.csv");
 d3.csv("airports.csv",draw);
   </script>
-<div  z-index = 20 align="center" class="fixed">   
+<div   align="center" class="fixed">   
         <a style = 'color: black' href="https://goo.gl/forms/62WtocUq4khxeR8R2" class="btn btn-info btn-lg">
-          <span style = 'color :white' class="glyphicon glyphicon-comment"></span> Feedback
+          <span style = 'color : white' class="glyphicon glyphicon-comment"></span> Feedback
         </a> 
 </div>
 
