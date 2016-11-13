@@ -53,11 +53,23 @@ div.Selections div {
         margin: 7px;
       }
 
+
+div.fixed {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 300px;
+    border: 2px solid black;
+}
+
 </style>
 
 
 <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="//d3js.org/topojson.v1.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script type="text/javascript">
 
    var margin = 75,
@@ -349,6 +361,11 @@ legend.append("text")
 console.log("Starting to load Airport.csv");
 d3.csv("airports.csv",draw);
   </script>
+<div align="center" class="fixed">   
+        <a href="https://goo.gl/forms/62WtocUq4khxeR8R2" class="btn btn-info btn-lg">
+          <span class="glyphicon glyphicon-comment"></span> Feedback
+        </a> 
+</div>
 
 </body>
 </html>
