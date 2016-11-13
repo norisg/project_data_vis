@@ -43,15 +43,55 @@ path {
 div.Selections {
         position: fixed;
         top: 50px;
-        right: 50px;
+        right: 30px;
       }
+  div.Selections:hover {
+  cursor: pointer;
+}
 
 div.Selections div {
         background-color: lightblue;
         color : black;
         padding: 3px;
         margin: 7px;
+        text-align: center;
       }
+div.Explore {
+        position: fixed;
+        top: 250px;
+        right: 60px;
+      }
+div.Explore div {
+        background-color: lightgreen;
+        color : black;
+        padding: 3px;
+        margin: 7px;
+        text-align: center;
+      }
+
+  div.Selections:hover {
+  cursor: pointer;
+}
+  div.Explore:hover {
+  cursor: pointer;
+}
+div.barchart {
+  position: fixed;
+  bottom: 300px;
+  right: 80px;
+  text-align: center;
+  font-size: 15px;
+}
+
+div.barchart div {
+  border: 0px solid black;
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: black;
+  font : 10px sans-serif;
+  background-color: lightblue;
+}
 
 
 div.fixed {
@@ -59,8 +99,16 @@ div.fixed {
     bottom: 0;
     right: 0;
     width: 300px;
-    border: 2px solid black;
+    border: 2px solid white;
 }
+
+div.tt {
+  font-family: 'Arial', Helvetica, sans-serif;
+  font-size : 200%;
+  font-style: normal;
+}
+
+
 
 </style>
 
@@ -77,11 +125,12 @@ div.fixed {
        height = 800 - margin;
 
 
-var methods = ['Departures', 'Arrivals', 'Mean_Departure_Delay_per_Flight', 'Mean_Arrival_Delay_per_Flight'];
+var methods = ['Departures', 'Arrivals', 'Mean_Departure_Delay_per_Flight', 'Mean_Arrival_Delay_per_Flight','Departures_and_Arrivals',"10_Busiest_Airports"];
 
-var si = {'Departures':'','Arrivals':'', 'Mean_Departure_Delay_per_Flight': 'in Minutes', 'Mean_Arrival_Delay_per_Flight': 'in Minutes' };
+var si = {'Departures':'','Arrivals':'', 'Mean_Departure_Delay_per_Flight': 'in Minutes', 'Mean_Arrival_Delay_per_Flight': 'in Minutes' ,'Departures_and_Arrivals':"",
+          '10_Busiest_Airports' :""};
 
-var colour = {'Departures':'rgb(102,180,255)','Arrivals':'rgb(51,51,255)', 'Mean_Departure_Delay_per_Flight': 'rgb(153,153,255)', 'Mean_Arrival_Delay': '(204,204,255)' };
+var colour = {'Departures':'rgb(102,180,255)','Arrivals':'rgb(51,51,255)', 'Mean_Departure_Delay_per_Flight': 'rgb(153,153,255)', 'Mean_Arrival_Delay': '(204,204,255)','Departures_and_Arrivals':'rgb(102,180,255)',  '10_Busiest_Airports': 'rgb(102,180,255)'};
 
 var airport_projection = d3.geo.albersUsa()
                             .scale(1300) 
@@ -97,7 +146,7 @@ function draw(airport_data) {
 
 d3.select("body")
           .append("h2")
-          .text("US Airport Information 2008");
+          .text("US Flight Information 2008");
 
 var path = d3.geo.path()
     .projection(null);
@@ -145,13 +194,15 @@ function add_geodata(leaves){
       count ++;  
   }
   //debugger;
-  return {'lat' : Geo_Coord[0],
+  return {
+          'lat' : Geo_Coord[0],
           'long' : Geo_Coord[1],
           'Airport': airport_data[count-1]['airport'],
           'Departures' : leaves[0]['DepFlights'],
           'Arrivals' : leaves[0]['Arrivals'],
           'Mean_Departure_Delay_per_Flight' : leaves[0]['DepDelay_Mean'],
-          'Mean_Arrival_Delay_per_Flight': leaves[0]['ArrivalsDelay_Mean']
+          'Mean_Arrival_Delay_per_Flight': leaves[0]['ArrivalsDelay_Mean'],
+          'Departures_and_Arrivals': parseFloat(leaves[0]['DepFlights']) + parseFloat(leaves[0]['Arrivals'])
           }
 
 };
@@ -162,12 +213,23 @@ function add_geodata(leaves){
  d3.csv("Arrivals_year.csv", function(data){
   console.log(data);
 
-  nested = d3.nest()
+  var nested = d3.nest()
             .key(function(d){
               return d['Airport'];
             })
             .rollup(add_geodata)
             .entries(data);
+
+  //Append all necessary tags
+
+  d3.select('body')
+   .append('div')
+   .attr("class",'Explore');
+
+  d3.select('body')
+   .append('div')
+   .attr("class",'barchart');
+
 
 
   var buttons = d3.select("body")
@@ -180,9 +242,24 @@ function add_geodata(leaves){
                 .text(function(d) {
                       return d.replace(/_/gi,' ') +' ' + si[d];
                         });
+           
 
 
   buttons.on("click", function(d) {
+
+    d3.select(".barchart")
+      .text("")
+      .selectAll('div')
+      .data([])
+      .exit()
+      .remove();
+
+    d3.select(".Explore")
+      .selectAll('div')
+      .data([])
+      .exit()
+      .remove();
+      //debugger;
 
    d3.select(".Selections")
      .selectAll('div')
@@ -196,7 +273,7 @@ function add_geodata(leaves){
        .transition()
        .duration(500)
        .style("background", "lightGreen")
-       .style("color", "white");
+       .style("color", "black");
         update(d);
        });
 
@@ -204,10 +281,6 @@ function add_geodata(leaves){
 //=============================getGeoPos(d,Boolean)===================================
 //====================================================================================
 
-
-
-//==========================END getGeoPos(d,Boolean)===================================
-//====================================================================================
 
 function getGeoPos(d,Boolean){
    //console.log("Hello")
@@ -228,20 +301,45 @@ function getGeoPos(d,Boolean){
 };
 };
 
+//==========================END getGeoPos(d,Boolean)===================================
+//====================================================================================
+
+
 //=============================update(selection)======================================
 //====================================================================================
   function update(Selection){
+  
+  Explore = ['Mean_Arrival_Delay_per_Flight', 'Mean_Departure_Delay_per_Flight'];
+ 
+   nested = d3.nest()
+            .key(function(d){
+              return d['Airport'];
+            })
+            .rollup(add_geodata)
+            .entries(data);
+
+
+   Flag = false;
+   if (Selection == "10_Busiest_Airports"){
+
+        Selection = 'Departures_and_Arrivals'
+        Flag = true;
+}
+
 
 
    nested = nested.sort(function(a,b){
               return b.values[Selection] - a.values[Selection];
               });
 
-  
+ 
+
+
+
 
   console.log(nested)
   Max= d3.max(nested, function(d){
-                      return parseInt(d.values[Selection])
+                      return parseFloat(d.values[Selection])
                       })
  
   
@@ -250,25 +348,111 @@ function getGeoPos(d,Boolean){
                    .domain([0, Max])
                    .range([0, 30]);
 
+ 
 
  //tooltip for circle selection
   var tooltip = d3.select("body")
   .append("div")
+  .attr("class", "tt")
   .style("position", "absolute")
   .style("z-index", "10")
   .style("visibility", "hidden")
-  .text("a simple tooltip");
-
-
-
+  
+  if (Flag == false){
    d3.select("h2")
-     .text("US Airport Information 2008 " +'\n' + Selection.replace(/_/gi,' '));
+     .text("US Flight Information 2008 " +'\n' + Selection.replace(/_/gi,' '));
+   }
+   else{
+    d3.select("h2")
+     .text("US Flight Information 2008 " +'\n' + "10 Busiest Airports");
+   }
+
+  if ( Flag == true){
+    nested = nested.slice(1,11);
+
+    //Add Explore Buttons only for Selections 10 Busiest Airports
+
+    d3.select(".barchart")
+      .selectAll('div')
+      .data([])
+      .exit()
+      .remove();
+
+        d3.select('.Explore')
+                  .selectAll("div")
+                  .data(Explore)
+                  .enter()
+                  .append("div")
+                  .text(function(d){
+                          return d.replace(/_/gi,' ');
+                  })
+          .on("click",function(d){
+          d3.select(".Explore")
+          .selectAll('div')
+         .transition()
+         .duration(500)
+         .style("background","lightgreen")
+         .style("color","black");
+
+      d3.select(".barchart")
+      .text("")
+      .selectAll('div')
+      .data([])
+      .exit()
+      .remove();
+
+      d3.select(this)
+       .transition()
+       .duration(500)
+       .style("background", "red")
+       .style("color", "white");
+        update_barchart(d);
+       });
+
+    }
+//=====================================================    
+    function update_barchart(Explore){
+
+       nested = nested.sort(function(a,b){
+              return b.values['Mean_Departure_Delay_per_Flight'] - a.values['Mean_Departure_Delay_per_Flight']
+              });
+         Max= d3.max(nested, function(d){
+                      return parseFloat(d.values['Mean_Departure_Delay_per_Flight'])
+                      })
+        //Scale for appended circles
+     bar_scale= d3.scale.linear()
+                   .domain([0, Max])
+                   .range([0, 200]);
+
+        d3.select('.barchart')
+          .text(function(){
+            return Explore.replace(/_/gi,' ')
+            })
+          .selectAll('div')
+          .data(nested)
+          .enter()
+          .append('div')
+          .style('width', function(d){
+            // debugger;
+              delay = parseFloat(d.values[Explore]);
+              if (delay < 1.0){
+                return 0 + 'px';
+              } 
+              else{
+                return bar_scale(delay) + 'px';
+              } 
+              
+          })
+          .text(function(d){return (d['key'] +' ' + (parseFloat(d.values[Explore])).toFixed(0))})
+        }
+//===================================================
 
     svg.selectAll('circle')
                   .data([])
                   .exit()
                   .remove();
- 
+    
+    
             
     svg.append('g')
        .attr('class','bubble')
@@ -281,7 +465,7 @@ function getGeoPos(d,Boolean){
        .attr('cx', function(d) {  return getGeoPos(d,true);
                                           })
        .attr('cy', function(d) {  return getGeoPos(d,false)})
-       .attr('r', function(d) {      
+       .attr('r', function(d) {
                           if (d.values[Selection] == "NaN"){
                             return 0;
                           }
@@ -301,8 +485,9 @@ function getGeoPos(d,Boolean){
                                           .style('fill', 'red')
                                           .style('stroke', 'green')
                                           .style('stroke-width', '1.5')
-                                          tooltip.text(d['key'] +"\n" + d.values['Airport'])
+                                          tooltip.text("IATA: " + d['key'] +"\n" + d.values['Airport'])
                                                 .style("visibility", "visible");})
+                                               // .style("font-size", "200%");})
 
        .on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+15)+"px");})
        .on("mouseout", function(d){  
@@ -332,13 +517,13 @@ legend.append("circle")
     .attr("cy", function(d) { return  -radius(d); })
     .attr("r", radius)
     .style('fill', 'none')
-    .style('stroke-width', '0.7');
+    .style('stroke-width', '1.0');
 
 legend.append("text")
     .attr("y", function(d) { return -2* radius(d) ; })
     .attr("dx", "-0.4em")
     .style('stroke-width', '0.7')
-    .text(d3.format(".1ns"));
+    .text(d3.format(".1s"));
 
 }
                                               
@@ -361,9 +546,9 @@ legend.append("text")
 console.log("Starting to load Airport.csv");
 d3.csv("airports.csv",draw);
   </script>
-<div align="center" class="fixed">   
-        <a href="https://goo.gl/forms/62WtocUq4khxeR8R2" class="btn btn-info btn-lg">
-          <span class="glyphicon glyphicon-comment"></span> Feedback
+<div  z-index = 20 align="center" class="fixed">   
+        <a style = 'color: black' href="https://goo.gl/forms/62WtocUq4khxeR8R2" class="btn btn-info btn-lg">
+          <span style = 'color :white' class="glyphicon glyphicon-comment"></span> Feedback
         </a> 
 </div>
 
