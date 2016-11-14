@@ -1,3 +1,6 @@
+The link for the visualisation: http://bl.ocks.org/norisg/ed182add89566555c93b951a706d4200
+
+
 Introduction:
 
 I chose the Flight data set from the Udacity website. After trying to visualise the data I found out, that the data set was too large to 
