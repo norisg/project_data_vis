@@ -5,7 +5,7 @@
 <style>
 
 path {
-  fill: none;
+  fill: rgb(224,224,224);
   stroke: #000;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -43,7 +43,8 @@ path {
 div.Selections {
         position: fixed;
         top: 50px;
-        right: 30px;
+        right: 30px;;
+
       }
   div.Selections:hover {
   cursor: pointer;
@@ -55,14 +56,15 @@ div.Selections div {
         padding: 3px;
         margin: 7px;
         text-align: center;
+        font-size: 15px;
       }
 div.Explore {
         position: fixed;
-        top: 250px;
-        right: 60px;
+        top: 190px;
+        right: 30px;
       }
 div.Explore div {
-        background-color: lightgreen;
+        background-color: lightblue;
         color : black;
         padding: 3px;
         margin: 7px;
@@ -90,7 +92,7 @@ div.barchart div {
   margin: 1px;
   color: black;
   font : 10px sans-serif;
-  background-color: lightblue;
+  background-color: steelblue;
 }
 
 
@@ -104,7 +106,7 @@ div.fixed {
 
 div.tt {
   font-family: 'Arial', Helvetica, sans-serif;
-  font-size : 200%;
+  font-size : 150%;
   font-style: normal;
 }
 
@@ -125,12 +127,12 @@ div.tt {
        height = 800 - margin;
 
 
-var methods = ['Departures', 'Arrivals', 'Mean_Departure_Delay_per_Flight', 'Mean_Arrival_Delay_per_Flight','Departures_and_Arrivals',"10_Busiest_Airports"];
+var methods = [ 'Departures_and_Arrivals','Mean_Departure_Delay_per_Flight',"Busiest_Airports","Airports_with_Highest_Departure_Delay"];
 
 var si = {'Departures':'','Arrivals':'', 'Mean_Departure_Delay_per_Flight': 'in Minutes', 'Mean_Arrival_Delay_per_Flight': 'in Minutes' ,'Departures_and_Arrivals':"",
-          '10_Busiest_Airports' :""};
+          'Busiest_Airports' :"",'Airports_with_Highest_Departure_Delay_per_Flight' : "in Minutes"};
 
-var colour = {'Departures':'rgb(102,180,255)','Arrivals':'rgb(51,51,255)', 'Mean_Departure_Delay_per_Flight': 'rgb(153,153,255)', 'Mean_Arrival_Delay': '(204,204,255)','Departures_and_Arrivals':'rgb(102,180,255)',  '10_Busiest_Airports': 'rgb(102,180,255)'};
+var colour = {'Departures':'rgb(102,180,255)','Arrivals':'rgb(51,51,255)', 'Mean_Departure_Delay_per_Flight': 'rgb(153,153,255)', 'Mean_Arrival_Delay': '(204,204,255)','Departures_and_Arrivals':'rgb(102,180,255)',  'Busiest_Airports': 'rgb(102,180,255)'};
 
 var airport_projection = d3.geo.albersUsa()
                             .scale(1300) 
@@ -240,7 +242,7 @@ function add_geodata(leaves){
                 .enter()
                 .append("div")
                 .text(function(d) {
-                      return d.replace(/_/gi,' ') +' ' + si[d];
+                      return d.replace(/_/gi,' ');
                         });
            
 
@@ -272,7 +274,7 @@ function add_geodata(leaves){
      d3.select(this)
        .transition()
        .duration(500)
-       .style("background", "lightGreen")
+       .style("background", "lightgreen")
        .style("color", "black");
         update(d);
        });
@@ -309,7 +311,7 @@ function getGeoPos(d,Boolean){
 //====================================================================================
   function update(Selection){
   
-  Explore = ['Mean_Arrival_Delay_per_Flight', 'Mean_Departure_Delay_per_Flight'];
+  Explore = ['Mean_Departure_Delay_per_Flight'];
  
    nested = d3.nest()
             .key(function(d){
@@ -318,12 +320,19 @@ function getGeoPos(d,Boolean){
             .rollup(add_geodata)
             .entries(data);
 
-
-   Flag = false;
-   if (Selection == "10_Busiest_Airports"){
+   console.log(Selection);
+   Flag_Delay = false;
+   Flag_Airport = false;
+   if (Selection == "Busiest_Airports"){
 
         Selection = 'Departures_and_Arrivals'
-        Flag = true;
+        Flag_Airport = true;
+}
+else if (Selection == 'Airports_with_Highest_Departure_Delay'){
+       Selection = 'Mean_Departure_Delay_per_Flight'
+       Flag_Delay = true;
+  
+
 }
 
 
@@ -358,17 +367,11 @@ function getGeoPos(d,Boolean){
   .style("z-index", "10")
   .style("visibility", "hidden")
   
-  if (Flag == false){
-   d3.select("h2")
-     .text("US Flight Information 2008 " +'\n' + Selection.replace(/_/gi,' '));
-   }
-   else{
-    d3.select("h2")
-     .text("US Flight Information 2008 " +'\n' + "10 Busiest Airports");
-   }
+ d3.select('h2')
+   .text(("US Flight Information 2008 \n")  + Selection.replace(/_/gi,' ') + ' ' + si[Selection])
 
-  if ( Flag == true){
-    nested = nested.slice(1,11);
+  if ( Flag_Delay == true || Flag_Airport == true){
+    nested = nested.slice(0,10);
 
     //Add Explore Buttons only for Selections 10 Busiest Airports
 
@@ -387,11 +390,12 @@ function getGeoPos(d,Boolean){
                           return d.replace(/_/gi,' ');
                   })
           .on("click",function(d){
+
           d3.select(".Explore")
           .selectAll('div')
          .transition()
          .duration(500)
-         .style("background","lightgreen")
+         .style("background", "lightblue")
          .style("color","black");
 
       d3.select(".barchart")
@@ -404,8 +408,8 @@ function getGeoPos(d,Boolean){
       d3.select(this)
        .transition()
        .duration(500)
-       .style("background", "red")
-       .style("color", "white");
+       .style("background", "lightgreen")
+       .style("color", "black")
         update_barchart(d);
        });
 
@@ -413,16 +417,24 @@ function getGeoPos(d,Boolean){
 //=====================================================    
     function update_barchart(Explore){
 
-       nested = nested.sort(function(a,b){
-              return b.values['Mean_Departure_Delay_per_Flight'] - a.values['Mean_Departure_Delay_per_Flight']
-              });
+    //nested = nested.sort(function(a,b){
+           // return b.values['Mean_Departure_Delay_per_Flight'] - a.values['Mean_Departure_Delay_per_Flight']
+           // });
          Max= d3.max(nested, function(d){
-                      return parseFloat(d.values['Mean_Departure_Delay_per_Flight'])
-                      })
+                  return parseFloat(d.values['Mean_Departure_Delay_per_Flight'])
+                   })
         //Scale for appended circles
+     if (Flag_Airport == true ){
      bar_scale= d3.scale.linear()
                    .domain([0, Max])
-                   .range([0, 200]);
+                   .range([10, 100]);
+
+      }
+      else{
+        bar_scale= d3.scale.linear()
+                   .domain([0, Max])
+                   .range([10, 300]);
+      }
 
         d3.select('.barchart')
           .text(function(){
@@ -439,12 +451,7 @@ function getGeoPos(d,Boolean){
                 return 0 + 'px';
               } 
               else {
-                if(Explore == 'Mean_Departure_Delay_per_Flight'){
-                return bar_scale(delay) + 'px';
-              }
-              else{
-                return delay + 'px'
-              }
+                return bar_scale(delay) + 'px'; 
               } 
               
           })
@@ -490,7 +497,11 @@ function getGeoPos(d,Boolean){
                                           .style('fill', 'red')
                                           .style('stroke', 'green')
                                           .style('stroke-width', '1.5')
-                                          tooltip.text("IATA: " + d['key'] +"\n" + d.values['Airport'])
+                                          tooltip.text( "IATA: " + d['key'] +"\n"
+                                                               + d.values['Airport'] +'\n'
+                                                               + 'Departures: ' + nFormatter((parseInt(d.values['Departures'])),1)
+                                                               + '\nArrivals: ' + nFormatter((parseInt(d.values['Arrivals'])),1)
+                                                               + '\nMean Departure-Delay: ' + parseInt(d.values['Mean_Departure_Delay_per_Flight']) + ' Min/Flight')
                                                 .style("visibility", "visible");})
                                                // .style("font-size", "200%");})
 
@@ -513,9 +524,9 @@ legend.exit().remove();
 Math.round(Max,1);
 var legend = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", "translate(" + (width - 100) + "," + (height - 20) + ")")
+    .attr("transform", "translate(" + (width - 200) + "," + (height - 50) + ")")
     .selectAll("g")
-    .data([Max/100, Max/10, Max])
+    .data([Max/10, Max/3, Max])
     .enter().append("g");
 
 legend.append("circle")
@@ -535,6 +546,22 @@ legend.append("text")
 //=========================END update(selection)======================================
 //====================================================================================
 
+function nFormatter(num, digits) {
+  var si = [
+    { value: 1E18, symbol: "E" },
+    { value: 1E15, symbol: "P" },
+    { value: 1E12, symbol: "T" },
+    { value: 1E9,  symbol: "G" },
+    { value: 1E6,  symbol: "M" },
+    { value: 1E3,  symbol: "k" }
+  ], rx = /\.0+$|(\.[0-9]*[1-9])0+$/, i;
+  for (i = 0; i < si.length; i++) {
+    if (num >= si[i].value) {
+      return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
+    }
+  }
+  return num.toFixed(digits).replace(rx, "$1");
+}
 
  });
 
