@@ -153,4 +153,6 @@ misleading.
  - NodeJS
  - stackoverflow.com
  - w3schools.com
+ 
+ code it still a bit buggy when selecting Busiest Airports and then trying to selecting the appended airports (the trouble is not that    simple to solve, at least for me)
 
