@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- This project dicussed the Flight data of American Airport and Domestic Flight, the following visualisation was created by 
+     Norbert Norit
+Germany -->
+<style>
+.Airports path {
+  fill: #282726;
+  stroke: #000;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  z-index: 10;
+  opacity: 0,5;
+  stroke-opacity: 0,3;
+
+}
+path.state{
+  z-index: 10;
+  stroke: #000;
+
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.bubble{
+  z-index: 10;
+}
+circle {
+  fill: rgb(80,80,250);
+  stroke: black;
+  stroke-width: 1.0;
+  opacity: 0.7;
+  z-index: 10
+}
+
+ h2 {
+  text-align: center;
+  color: black;
+  white-space: pre;
+}
+ text {
+  text-align: center;
+  color: black;
+  white-space: pre;
+}
+
+div {
+  white-space: pre;
+}
+p {
+  font-size: 20;
+  text-align: center;
+  font-weight: bold;
+}
+p.description {
+  white-space: :pre;
+  text-align: center;
+  font-size: 25px;
+}
+
+div.Selections {
+  position: fixed;
+  top: 200px;
+  right: 30px;
+}
+div.Selections:hover {
+  cursor: pointer;
+}
+
+div.Selections div {
+  background-color: lightblue;
+  color : black;
+  padding: 3px;
+  margin: 7px;
+  text-align: center;
+  font-size: 15px;
+}
+div.Explore {
+ position: fixed;
+ top: 190px;
+ right: 30px;
+}
+div.Explore div {
+  background-color: lightblue;
+  color : black;
+  padding: 3px;
+  margin: 7px;
+  text-align: center;
+}
+
+div.Selections:hover {
+  cursor: pointer;
+}
+div.Explore:hover {
+  cursor: pointer;
+}
+div.barchart {
+  position: fixed;
+  bottom: 200px;
+  right: 80px;
+  text-align: center;
+  font-size: 15px;
+}
+
+div.barchart div {
+  border: 0px solid black;
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: black;
+  font : 10px sans-serif;
+  background-color: steelblue;
+}
+
+
+div.fixed {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 200px;
+  border: 2px solid none;
+}
+
+div.tt_1 {
+  font-family: 'Arial', Helvetica, sans-serif;
+  font-size : 100%;
+  font-style: normal;
+  border: 0.5px solid white;
+  color: #F4D03F;
+  background-color: black;
+  background-opacity : 0.5;
+};
+.tt_2 {
+  font-family: 'Arial', Helvetica, sans-serif;
+  font-size: 30px;
+   
+}
+div#description{
+  position: absolute;
+  /*top: 30px;*/
+  display: inline-block;
+  /*text-align: center;*/
+  vertical-align: top;
+}
+
+
+
+
+.y_axis, .x_axis {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    font-size: 10px
+    /*shape-rendering: crispEdges;*/
+}
+.y1_axis  {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1px;
+    font-size: 10px;
+    shape-rendering: crispEdges;
+}
+.x1_axis  {
+  fill: none;
+  stroke: grey;
+  shape-rendering: crispEdges;
+}
+
+
+.tick line{
+  opacity: 0.2;
+}
+
+.legend_delay {
+  fill:white;
+  stroke:black;
+  opacity:1;}
+
+
+
+/*div.Bar_Chart{
+  position: absolute;
+  float: left;
+ /*text-align: center;
+}*/
+
+.Delay_Bar_Chart{
+
+
+}
+
+</style>
+
+
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.2.0.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="d3.legend.js"></script>
+<script type="text/javascript">
+
+var margin = 80,
+    width  = 1400 - margin,
+    height = 800 - margin;
+
+
+var map_projection = d3.geo.albersUsa()
+                            .scale(1300) 
+                            .translate([width / 2, height / 2]);
+
+var colour = {'Departures':'rgb(102,180,255)','Arrivals':'rgb(51,51,255)', 'Mean_Departure_Delay_per_Flight': 'rgb(153,153,255)', 
+              'Mean_Arrival_Delay': '(204,204,255)','Departures_and_Arrivals':'rgb(102,180,255)',  'Busiest_Airports': 'rgb(102,180,255)'};
+
+var methods = [ "Busiest_Airports","All_Airports"];
+
+//===================Functions for Calculations==================
+function returnGeo(d,Is_Lat){
+    var Geo = map_projection([+d.values.long, +d.values.lat]);
+    var value;
+    if (Geo == null) {
+        return -100; 
+    }
+    else{
+      if (Is_Lat){
+        value = [Geo[1]]
+        console.log(value.type)
+      }
+      else{
+        value = Geo[0]
+      }
+      return value;
+    }
+};
+//===================Functions for Calculations==================
+
+//==========================draw(airport_data) ==================
+//===============================================================
+
+function draw_USMap() {
+
+    d3.select("body")
+      .append("h2")
+      .text("US Flight Data Information");
+
+    d3.select("body")
+      .append("p")
+      .html("This Visualisation explores data provided by RITA (Bureau of Transportation Statistics) from 1987 until 2008."
+            + " <br/> It mainly focuses only airports and flight delays ");
+    d3.select('p')
+      .append('a')
+      .attr('href', 'http://www.transtats.bts.gov/Fields.asp?Table_ID=236')
+      .append('text')
+      .style('color','blue')
+      .text('see Details')
+
+    d3.select('body')
+      .append('p')
+      .style('text-align', 'center')
+      .style('font-weight', 'normal')
+      .html("The following visualisation shows airports around the US and the amount of all Flight(Departures and Arrivals) for the year 2008. The number of flights are decoded in the" 
+           +" size of the circles. When you hover over one airport and select it more information will be provided. ")
+
+    //==========================Create US Map========================
+    //===============================================================
+    var path = d3.geo.path()
+                     .projection(null);
+
+    var svg = d3.select("body")
+        .append("svg")
+        .attr('class', 'Airports')
+        .attr("width", width + margin)
+        .attr("height", height + margin);
+
+    d3.json("us_map.json", function(error, us) {
+      if (error) return console.error(error);
+      svg.append("path")
+         .datum(topojson.feature(us, us.objects.counties))
+         .attr("class", "state")
+         .attr("d", path)
+      
+
+      });
+     width_2 = 600;
+     height_2 = 400;
+     var MARGINS = {
+        top: 70,
+        right: 90,
+        bottom: 70,
+        left: 70
+    }
+
+    var Max_values;
+    var Max_sorted;
+    d3.select('body')
+      .append('div')
+      .attr('class', 'Delay_Chart_div')
+      .attr("width", width + margin)
+      .attr("height", height + margin)
+    var svg_2 = d3.select(".Delay_Chart_div")
+        .append("svg")
+        .attr('class', 'Delay_Chart')
+        .attr("width", width_2)
+        .attr("height", height_2)
+        .attr("display",'inline-block');
+
+  var description_2= d3.select('body')
+      .append('div')
+      .attr('class', 'Bar_Chart')
+      .attr("width", width_2)
+      .attr("height", height_2)
+  description_2.append('h4')
+    .html('Delayed Flights and Arrival Delays of the Top 10 US-Airports <br> (related to the number of Incoming and Outgoing Flights)')
+    .style('text-align','center')
+  description_2.append('div')
+    .attr('position','absolute')
+    .attr('padding', 5+'px')
+    .style('left', 100)
+    //.style('text-align','center')
+    .html('<br> <br>')
+
+      //.attr('text-align','center')
+     d3.select('body')
+        .append("div")
+        .attr('class', 'Bar_Chart')
+        .attr("display",'inline-block')
+        .attr("width", width_2/2)
+        .attr("height", height_2)
+        .style('left', 100)
+        .style('text-align','center')
+
+    var svg_3 = d3.select('.Bar_Chart')
+        .append("svg")
+        .attr('class', 'Delay_Bar')
+        .style('float','left')
+        .attr("width", width_2)
+        .attr("height", height_2)
+        .attr('display', 'inline-block')
+
+  var svg_4 = d3.select('.Bar_Chart')
+        .append("svg")
+        .attr('class', 'chart_2')
+       // .style('float','left')
+        .attr("width", width_2)
+        .attr("height", height_2)
+        .attr("display",'inline-block')
+      //  .attr('transform', 'translate(' +width_2+',0)')
+
+
+
+
+    d3.csv("Visualisation_Airport_Year_2008.csv",draw_help)
+     
+    function draw_help(data){ 
+     setTimeout(function(){
+
+      draw(data)
+
+    
+
+        function draw(data) {
+
+
+              // Update function for Selection Logic
+            // ============================================================
+          function update_airports(d,button){
+            if(button == false){
+              data = nested;
+              for (i in data){
+                if (data[i].key == d.key){
+                  data[i].values.Selected = true;
+                }
+                else{
+                  data[i].values.Selected = false;
+                }
+
+              }
+
+            }
+            else{
+          
+              data=nested.slice(0,10)
+            }
+
+              var t = d3.transition()
+                         .duration(750);
+              var circle = svg.select('.bubble')
+                   .selectAll('circle')
+                   .data(data, function(d){
+                    return d['key'];
+                   })
+
+              circle.exit()
+                  .transition(t)
+                    .attr('cy',60)
+                    .attr('opacity',1e-6)
+                    .remove();  
+              if (d==0){
+                debugger;
+                var result = circle.enter().append('circle')
+              }
+              else{
+                var result = circle
+              }
+              
+              result.attr('cx', function(d) {
+                          return returnGeo(d,false);
+                      })
+                     .attr('cy', function(d) {
+                          return returnGeo(d,true)})
+                     .attr('r', function(d) {
+                        r = parseFloat(d.values['TotalFlights'])
+                        if (r == 'NaN'){
+                          return 0
+                        }
+                        else{
+                             if (r > 0) {
+                                return radius(r)
+                              }
+                             else {
+                                return 0
+                              }
+                            }
+                      })
+                     .style('fill', function(d){
+                      if (d.values.Selected== true){
+                        return 'green'
+                      }
+                      else{
+                        return 'rgb(80,80,250)'
+                      }
+                     })
+                   
+
+            }   // update_airport();
+
+            // =========================================================
+            // svg.selectAll('circle')
+            //     .data([])
+            //     .exit()
+            //     .remove();
+
+            function extend(obj, src) {
+              for (var key in src) {
+                  if (src.hasOwnProperty(key)) obj[key] = src[key];
+              }
+              return obj;
+            }
+
+            var nested = d3.nest()
+                       .key(function(d){
+                        return d['Origin']
+                       }) 
+                       .rollup(function(leaves){       
+                       return extend(leaves[0],{"Selected": false});
+                       })
+                       .entries(data);
+          
+            Max_values = [d3.max(nested,function(d){ return parseFloat(d.values['CarrierDelay'])}),d3.max(nested,function(d){ return parseFloat(d.values['WeatherDelay'])}),
+                          d3.max(nested,function(d){ return parseFloat(d.values['NASDelay'])}), d3.max(nested,function(d){ return parseFloat(d.values['LateAircraftDelay'])}),
+                           d3.max(nested,function(d){ return parseFloat(d.values['SecurityDelay'])})]
+
+            Max_sorted = Max_values.sort(function(a,b){return b-a});
+
+          
+              
+              //Scale for appended circles
+              Max= d3.max(nested, function(d){
+                                  return parseFloat(d.values['TotalFlights'])
+                                  })
+              
+              
+              radius = d3.scale.sqrt()
+                               .domain([0, Max])
+                               .range([0, 30]);
+
+              // Tooltip for Airport Circles
+              //tooltip for circle selection
+              var tooltip= d3.select("body")
+                              .append("div")
+                              .attr("class", "tt_1")
+                              .style("position", "absolute")
+                              .style("z-index", "10")
+                              .style("visibility", "hidden")      
+
+              var previous; 
+              var Selected;
+
+              d3.select('svg')
+                 .append('g')
+                 .attr('class','bubble')
+                 .selectAll('circle')
+                 .data(nested, function(d) {
+                      return d['key']
+                  })
+                 .enter()
+                 .append('circle')
+                 .attr('cx', function(d) {
+                      return returnGeo(d,false);
+                  })
+                 .attr('cy', function(d) {
+                      return returnGeo(d,true)})
+                 .attr('r', function(d) {
+                    r = parseFloat(d.values['TotalFlights'])
+                    if (r == 'NaN'){
+                      return 0
+                    }
+                    else{
+                         if (r > 0) {
+                            return radius(r)
+                          }
+                         else {
+                            return 0
+                          }
+                        }
+                  })
+                 .style('fill', function(d){
+                    if (d.values.Selected== true){
+                      return 'green'
+                    }
+                    else{
+                      return 'rgb(80,80,250)'
+                    }
+                 })
+                 
+                 .on("mouseover", function(d){  
+                    d.values.Selected = false;
+                    d3.select(this)
+                      .transition()
+                      .duration(1)
+                      .style('fill', 'red')
+                      .style('stroke', 'green')
+                      .style('stroke-width', '1.5')
+                      tooltip.text( "IATA: " + d['key'] +"\n"
+                                    + d.values['airport'] +'\n'
+                                     )
+                      .style("visibility", "visible");
+                
+
+                  })
+                           // .style("font-size", "200%");})
+
+               .on("mousemove", function(){
+                    return tooltip.style("top", (event.pageY-10)+"px")
+                                  .style("left",(event.pageX+15)+"px");
+                })
+               
+               .on("mouseout", function(d){
+                      d3.select(this)
+                        .transition()
+                        .duration(1)
+                        .style('stroke','black')
+                        .style('stroke-width','1.0')
+                        tooltip.style("visibility", "hidden");
+
+                  if (d.values.Selected ==false){
+                      d3.select(this)
+                        .style('fill', colour[Selection])
+                    }
+                 })
+               .on("mouseup", function(d){
+                  update_airports(d,false);
+                  d3.select(this)
+                    .style('fill', 'green')
+                  draw_delay(d);
+               })
+
+            // Add a legend for different selections
+            legend = svg.select(".legend")
+                              .data([])
+            legend.exit().remove();
+
+
+            Math.round(Max,1);
+            var legend = svg.append("g")
+                .attr("class", "legend")
+                .attr("transform", "translate(" + (width - 200) + "," + (height - 50) + ")")
+                .selectAll("g")
+                .data([Max/10, Max/3, Max])
+                .enter().append("g");
+
+            legend.append("circle")
+                .attr("cy", function(d) { return  -radius(d); })
+                .attr("r", radius)
+                .style('fill', 'none')
+                .style('stroke-width', '1.0');
+
+            legend.append("text")
+                .attr("y", function(d) { return -2* radius(d) ; })
+                .attr("dx", "-0.4em")
+                .style('stroke-width', '0.7')
+                .text(d3.format(".1s"));
+
+
+            //Add Buttons
+            var buttons = d3.select("body")
+                .append("div")
+                .attr("class", "Selections")
+                .selectAll("div")
+                .data(methods)
+                .enter()
+                .append("div")
+                .text(function(d) {
+                      return d.replace(/_/gi,' ');
+                        });
+
+
+             buttons.on("click", function(d) {
+
+                
+                 d3.select(".Selections")
+                   .selectAll('div')
+                   .transition()
+                   .duration(500)
+                   .style("background","lightblue")
+                   .style("color","black");
+
+                                  
+                   d3.select(this)
+                     .transition()
+                     .duration(500)
+                     .style("background", "lightgreen")
+                     .style("color", "black");
+                     debugger;
+                     if(d=='Busiest_Airports'){
+                      update_airports(0,true);
+                    }
+                    else{
+                      update_airports(0,false);
+                    }
+                  });
+                                                          
+            //=========================END update(selection)======================================
+            //====================================================================================
+
+            function nFormatter(num, digits) {
+              var si = [
+                { value: 1E18, symbol: "E" },
+                { value: 1E15, symbol: "P" },
+                { value: 1E12, symbol: "T" },
+                { value: 1E9,  symbol: "G" },
+                { value: 1E6,  symbol: "M" },
+                { value: 1E3,  symbol: "k" }
+              ], rx = /\.0+$|(\.[0-9]*[1-9])0+$/, i;
+              for (i = 0; i < si.length; i++) {
+                if (num >= si[i].value) {
+                  return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
+                }
+              }
+              return num.toFixed(digits).replace(rx, "$1");
+            }
+          }; //draw function
+          d3.csv("Visualisation_Airport_Year_2008.csv",draw_barchart)
+  
+
+      function draw_barchart(data){
+
+         margin = {top: 40, right: 20, bottom: 30, left: 70},
+         width = +svg_3.attr("width") - margin.left - margin.right,
+         height = +svg_3.attr("height") - margin.top - margin.bottom;
+
+        counter=0;
+        var nested = d3.nest()
+                        .key(function(d){
+                          return d['Origin']
+                         }) 
+                         .rollup(function(leaves){  
+                         return {'percentage_delayed' : parseFloat(leaves[0]['Delayed'])/parseFloat(leaves[0]['TotalFlights']),
+                                 'percentage_cancelled': parseFloat(leaves[0]['Cancelled'])/parseFloat(leaves[0]['TotalFlights']),
+                                 'Origin' : leaves[0]['Origin'],
+                                 'Index': counter+=1,
+                                 'ArrDelay' : parseFloat(leaves[0]['ArrDelay'])
+                         }})
+                         .entries(data);
+       // nested = nested.sort(function(a,b){ return b.values['percentage_delayed']-a.values['percentage_delayed']})
+        nested = nested.slice(0,10);
+         var g = svg_3.append("g")
+           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+         var x = d3.scale.linear().range([0,width]);
+                 
+          
+         var y = d3.scale.linear().range([height, 0]);
+         y.domain([0, d3.max(nested, function(d) { return d.values['percentage_delayed']; })]);
+
+         x.domain([0,d3.max(nested,function(d) { return d['Index']; })]);
+         var barWidth = width / nested.length;
+
+         var xAxis = d3.svg.axis()
+             .scale(x)
+             .orient("bottom")
+             .ticks(10)
+    
+         var yAxis = d3.svg.axis()
+             .scale(y)
+             .orient("left")
+             .ticks(10,'%')
+
+ 
+
+        var bar = g.selectAll("g")
+            .data(nested)
+          .enter().append("g")
+            .attr("transform", function(d, i) {  return "translate(" + i * barWidth + ",0)"; });
+
+       bar.append("rect")
+          .attr("y", function(d) { return y(d.values['percentage_delayed']); })
+          .attr("height", function(d) { return height - y(d.values['percentage_delayed']); })
+          .attr("width", barWidth/2)
+          .style('fill', 'steelblue')
+
+      bar.append("text")
+          .attr("x", barWidth/ 4)
+         // .attr("x", function(d,i){debugger; return (barWidth/4)})
+          .attr("y", function(d) { return height + 3; })
+          .attr("dy", ".75em")
+          .text(function(d) { return d['key']; })
+          .style('font-size', 10)
+          .attr('text-anchor', 'middle')
+      g.append("g")
+               .attr("class", "y1_axis")
+               .attr("transform", "translate("+ (-0) + ",0)")
+               .call(yAxis)
+               
+      g.append("g")
+               .attr("class", "x1_axis")
+               .attr("transform", "translate("+ (-5) + "," + height +")")
+               .style('stroke-width', 1 +'px')
+              .style('font-size', 9)
+               .call(xAxis)
+
+      g.append("text")
+            .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+            .attr("transform", "translate("+ (-40)+","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+            .text("Delayed Flights in %")
+            .style('font-size',10)
+               
+        
+         
+         svg_3.append('text')
+             // .attr("class", "tt_2")
+              .html('Delayed Flights in % for the Top 10 Airports')
+              .attr('x', width/2 + margin.left)
+              .attr('y', '15')
+              .attr('text-anchor','middle')
+              .style('font-size', '15')
+                 
+   //============Checking for cancelled flights======================================================
+
+      var g = svg_4.append("g")
+           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+         var x = d3.scale.linear().range([0,width]);
+                 
+          
+         var y = d3.scale.linear().range([height, 0]);
+         y.domain([0, d3.max(nested, function(d) { return d.values['ArrDelay']; })]);
+
+         x.domain([0,d3.max(nested,function(d) { return d['Index']; })]);
+         var barWidth = width / nested.length;
+
+         var xAxis = d3.svg.axis()
+             .scale(x)
+             .orient("bottom")
+             .ticks(10)
+    
+         var yAxis = d3.svg.axis()
+             .scale(y)
+             .orient("left")
+             .ticks(10)
+
+ 
+
+        var bar = g.selectAll("g")
+            .data(nested)
+          .enter().append("g")
+            .attr("transform", function(d, i) {  return "translate(" + i * barWidth + ",0)"; });
+
+       bar.append("rect")
+          .attr("y", function(d) { return y(d.values['ArrDelay']); })
+          .attr("height", function(d) { return height - y(d.values['ArrDelay']); })
+          .attr("width", barWidth/2)
+          .style('fill', 'steelblue')
+
+      bar.append("text")
+          .attr("x", barWidth/ 4)
+         // .attr("x", function(d,i){debugger; return (barWidth/4)})
+          .attr("y", function(d) { return height + 3; })
+          .attr("dy", ".75em")
+          .text(function(d) { return d['key']; })
+          .style('font-size', 10)
+          .attr('text-anchor', 'middle')
+      g.append("g")
+               .attr("class", "y1_axis")
+               .attr("transform", "translate("+ (-0) + ",0)")
+               .call(yAxis)
+               
+      g.append("g")
+               .attr("class", "x1_axis")
+               .attr("transform", "translate("+ (-5) + "," + height +")")
+               .style('stroke-width', 1 +'px')
+              .style('font-size', 9)
+               .call(xAxis)
+
+      g.append("text")
+            .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+            .attr("transform", "translate("+ (-40)+","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+            .text("Mean Arrival Delay in Minutes")
+            .style('font-size',10)
+               
+        
+         
+         svg_4.append('text')
+             // .attr("class", "tt_2")
+              .html('Mean Delay per Flight in Minutes at the Destination Airport')
+              .attr('x', width/2 + margin.left)
+              .attr('y', '15')
+              .attr('text-anchor','middle')
+              .style('font-size', '15')
+
+
+
+      d3.select('body')
+        .append('p')
+        .style('position', 'absolute')
+        .style('text-align', 'left')
+        .style('left', 70 +'px')
+        .html("The charts above give interesting insights about the number of delayed aircraft and the mean arrival delay at the destination airport"
+              +"Regarding the 10 airports with the most departures and arrivals almost more than 30% ~ 40% of the flights are delayed." 
+              +" The mean delay time for airports at their destination differs much more. The airport of Chicago with 16 minutes delay time leads the group."
+              + " Compared to the CarrierDelays, WeatherDelays etc. which are belong the departure delays one can see than the mean arrival delay is much smaller."
+              + " It looks like airports include a bit buffer time in their flight schedule. Moreover one have to take the geographical positions of the airport"
+              +" into account. Tailwind for example shortens a flight by a significant factor.")
+
+
+
+
+
+      }    
+
+      function draw_delay(d){
+
+          
+          //==============Use d3 for barchart=====================================================
+          // Check for the speific data set
+
+          d3.selectAll('.CarrierDelay').remove();
+          d3.selectAll('.WeatherDelay').remove();
+          d3.selectAll('.NASDelay').remove();
+          d3.selectAll('.LateAircraftDelay').remove();
+          d3.selectAll('.SecurityDelay').remove();
+          d3.selectAll('.ArrDelay').remove();
+          d3.selectAll('.y_axis').remove();
+          d3.selectAll('.x_axis').remove();
+          d3.selectAll('.Delay_Chart')
+             .select('.tt_2').remove()
+          d3.selectAll('.Delay_Chart_div')
+            .selectAll('p').remove()
+          d3.selectAll('.Delay_Chart_div')
+            .selectAll('div').remove()
+          d3.selectAll('.Delay_Chart_div')
+            .selectAll('text').remove()
+
+
+
+
+          d3.select('.Delay_Chart')
+              .append('text')
+              .attr("class", "tt_2")
+              .html(d.values['airport'] + ', ' +d.values['city'] + ' (' + d['key'] +')')
+              .attr('x', width_2/2)
+              .attr('y', '15')
+              .attr('text-anchor','middle')
+              .style('font-size', '15')
+          d3.select('.Delay_Chart')
+              .append('text')
+              .attr("class", "tt_2")
+              .attr("position",'relative')
+              .html(" Delay Times for a Single Flight (Departure)")
+              .attr('x', width_2/2)
+              .attr('y', +2+'em')
+              .attr('text-anchor','middle')
+              .style('font-size', '15')
+
+
+          d3.csv("Visualisation_Airport_Monthly_2008.csv", function(data){
+          var nested_m = d3.nest()
+                            .key(function(d){
+                              return d['Origin']
+                            })
+                            .rollup(function(leaves){
+                              return leaves
+                            })
+                            .entries(data);
+          index = 0;
+          for (i in nested_m){
+            if(nested_m[i]['key']== d['key']){
+              index = i;
+              break;
+            };
+          }
+
+         var data = nested_m[index].values;
+          for (i in data){
+            data[i]['Month']=parseFloat( data[i]['Month'])
+            data[i]['CarrierDelay']=parseFloat( data[i]['CarrierDelay'])
+            data[i]['WeatherDelay']=parseFloat( data[i]['WeatherDelay'])
+            data[i]['NASDelay']=parseFloat( data[i]['NASDelay'])
+            data[i]['LateAircraftDelay']=parseFloat( data[i]['LateAircraftDelay'])
+            data[i]['SecurityDelay']=parseFloat( data[i]['SecurityDelay'])
+            data[i]['ArrDelay']=parseFloat( data[i]['ArrDelay'])
+          }
+          //test = d3.max(data,function(d){ return d.CarrierDelay});
+          Max_values = [d3.max(data,function(d){ return d.CarrierDelay}),d3.max(data,function(d){ return d.WeatherDelay}),
+                        d3.max(data,function(d){ return d.NASDelay}), d3.max(data,function(d){ return d.LateAircraftDelay}),
+                         d3.max(data,function(d){ return d.SecurityDelay})]
+
+          Max_sorted = Max_values.sort(function(a,b){return b-a});
+          
+          
+           //var formatMonth = d3.timeFormat("%B"),
+           xRange = d3.scale.linear().range([MARGINS.left, width_2 - MARGINS.right]).domain([1, d3.max(data, function(d) {
+                          return d['Month'];
+                       })])
+           yRange = d3.scale.linear().range([height_2 - MARGINS.bottom, MARGINS.top]).domain([0, Math.ceil(Max_sorted[0]/10)*10])
+
+          xAxis = d3.svg.axis()
+                        .scale(xRange)
+                        .tickSize(5)
+                        .tickSubdivide(true)
+          yAxis = d3.svg.axis()
+                        .scale(yRange)
+                        .tickSize(5)
+                        .orient('left')
+                        .tickSubdivide(true)
+                      //  .innerTickSize(-(width_2-MARGINS.right))
+
+
+          svg_2.append('svg:g')
+            .attr('class', 'x_axis')
+            .attr('transform', 'translate(0,' + (height_2 - MARGINS.bottom) + ')')
+            .call(xAxis);
+
+          svg_2.append('svg:g')
+            .attr('class', 'y_axis')
+            .attr('transform', 'translate(' + (MARGINS.left) + ',0)')
+            .call(yAxis);
+
+          var CarrierDelay = d3.svg.line()
+                            .x(function(d) {
+                              return xRange(d.Month);
+                            })
+                            .y(function(d) {
+                              return yRange(d.CarrierDelay);
+                            })
+                            .interpolate('linear');
+
+          var WeatherDelay = d3.svg.line()
+                      .x(function(d) {
+                        return xRange(d.Month);
+                      })
+                      .y(function(d) {
+                        return yRange(d.WeatherDelay);
+                      })
+                      .interpolate('linear');
+
+
+          var NASDelay = d3.svg.line()
+                      .x(function(d) {
+                        return xRange(d.Month);
+                      })
+                      .y(function(d) {
+                        return yRange(d.NASDelay);
+                      })
+                      .interpolate('linear');
+
+          var LateAircraftDelay = d3.svg.line()
+                      .x(function(d) {
+                        return xRange(d.Month);
+                      })
+                      .y(function(d) {
+                        return yRange(d.LateAircraftDelay);
+                      })
+                      .interpolate('linear');
+
+          var SecurityDelay = d3.svg.line()
+                      .x(function(d) {
+                        return xRange(d.Month);
+                      })
+                      .y(function(d) {
+                        return yRange(d.SecurityDelay);
+                      })
+                      .interpolate('linear');
+
+         var ArrDelay = d3.svg.line()
+                      .x(function(d) {
+                        return xRange(d.Month);
+                      })
+                      .y(function(d) {
+                        return yRange(d.ArrDelay);
+                      })
+                      .interpolate('linear');
+
+          
+
+          svg_2.append('svg:path')
+             .attr('class', 'CarrierDelay')
+             .attr('d', CarrierDelay(data))
+             .attr('stroke', 'black')
+             .attr('stroke-width', 2)
+             .attr('fill', 'none')
+             .attr("data-legend", 'CarrierDelay')
+
+
+          svg_2.append('svg:path')
+           .attr('class', 'LateAircraftDelay')
+           .attr('d', LateAircraftDelay(data))
+           .attr('stroke', 'green')
+           .attr('stroke-width', 2)
+           .attr('fill', 'none')
+           .attr("data-legend", 'LateAircraftDelay')
+
+           svg_2.append('svg:path')
+             .attr('class', 'NASDelay')
+             .attr('d', NASDelay(data))
+             .attr('stroke', 'blue')
+             .attr('stroke-width', 2)
+             .attr('fill', 'none')
+             .attr("data-legend", 'NASDelay')
+
+          svg_2.append('svg:path')
+             .attr('class', 'WeatherDelay')
+             .attr('d', WeatherDelay(data))
+             .attr('stroke', 'red')
+             .attr('stroke-width', 2)
+             .attr('fill', 'none')
+             .attr("data-legend", 'WeatherDelay')
+ 
+          svg_2.append('svg:path')
+             .attr('class', 'SecurityDelay')
+             .attr('d', SecurityDelay(data))
+             .attr('stroke', '#1290D5')
+             .attr('stroke-width', 2)
+             .attr('fill', 'none')
+             .attr("data-legend", 'SecurityDelay')
+
+        // now add titles to the axes
+        svg_2.append("text")
+            .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+            .attr("transform", "translate("+ (MARGINS.left/2)+","+(height_2/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+            .text("Mean Delay Time in Minutes");
+
+        svg_2.append("text")
+            .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+            .attr("transform", "translate("+ (width_2/2) + "," + (height_2-MARGINS.bottom/2) + ")")  // centre below axis
+            .text("Month");
+
+        //============================================================================================================================================================
+        // //
+        legend = svg_2.append("g")
+        .attr("class","legend_delay")
+        .attr("transform","translate(100,70)")
+        .style("font-size","10px")
+        .call(d3.legend)
+
+       // Append short explanation on the right:
+
+        d3.select('.Delay_Chart_div')
+          .append('div')
+          .attr('id','description')
+        //  .attr('width', '300')
+        d3.select('#description')
+          .append('h4')
+          .style('text-align', 'center')
+          .html("Delay Times in the year 2008 for Airports in the US")
+         d3.select('#description') 
+           .append('text')
+           .style('text-align','left')
+           .style('font-size','8')
+           .html('The delay times for an airport are categorized in:'
+            +" <br>1. NASDelay: Delay that is within the control of the National Airspace System (NAS)"
+            + " <br>e.g. air-operation, heavy traffic volume."
+            +"<br>2. LateAircraftDelay: Arrival delay at an airport due to the late arrival of the same aircraft at a previous airport"
+            +"<br>3. CarrierDelay: The delay is in total control of the air carrier"
+            +"<br>4. WeatherDelay and 5. SecurityDelay ")
+           d3.select('#description')
+             .append('a')
+              .attr("href", "http://aspmhelp.faa.gov/index.php/Types_of_Delay"+'...')
+              .append('text')
+              .style('color','blue')
+              .text('(see Details)')
+
+           d3.select('#description')
+             .append('div')
+             .html("Conclsion:" + '<br>'+ "For airports the Securtiy delay is neglectable which is remarkable thinking of all the checks and controls at the airport."
+                     +"<br>Moreover one cannot not clearly recognize huge delay because of winter conditions. The WeatherDelay is suprisingly slight"
+                    +"<br>It would have been reasonable that aiports had more problems getting the runaway ready by time after a heavy snow fall" 
+                    +"<br>"+"in the night. My guesstimation is, that delays caused by De-Icing of airplanes are included in CarrierDelays and that's"
+                    +"<br>why CarrierDelays are that high. The most dominat delays are LateAircraftDelay and CarrierDelays and NASDelay."
+                    + "<br>");
+  
+
+        }) // end of d3.csv...
+      }// end of draw_delay function
+    
+    },10);
+}
+}
+  
+
+// };   
+
+</script>
+</head>
+<!-- ============================================BODY================================================================== -->
+<body>
+
+  <script type="text/javascript">
+
+console.log("=========================Starting Visualisation ==============================================");
+draw_USMap();
+//d3.csv("Visualisation_Airport_Year_2008.csv",draw);
+  </script>
+  <div align="center" class="fixed">   
+          <a style ='color: black' href="https://goo.gl/forms/62WtocUq4khxeR8R2" class="btn btn-info btn-lg">
+            <span style = 'color : white' class="glyphicon glyphicon-comment"></span> Feedback
+          </a> 
+  </div>
+
+</body>
+<!-- ============================================BODY================================================================== -->
+
+</html>
