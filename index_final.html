@@ -159,7 +159,7 @@ var svg = d3.select("body").append("svg")
 
 //==========================Create US Map========================
 //===============================================================
-d3.json("build/us_map.json", function(error, us) {
+d3.json("us_map.json", function(error, us) {
   if (error) return console.error(error);
 
  console.log(us);
